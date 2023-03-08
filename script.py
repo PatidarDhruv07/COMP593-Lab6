@@ -65,5 +65,6 @@ def delete_installer(installer_path):
     os.remove(installer_path)
     return
 
+
 if __name__ == '__main__':
     main()
