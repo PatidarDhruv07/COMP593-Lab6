@@ -1,44 +1,43 @@
-import requests
-import hashlib
-import os
-import subprocess
-
+import requests, hashlib, subprocess, os
 
 def main():
-    # Get SHA-256 hash value 
+    # Get SHA-256 hash value of the VLC installer
     expected_sha256 = get_expected_sha256()
-    # Download the VLC installer
+
+    # Download (but don't save) the VLC installer from the VLC website
     installer_data = download_installer()
-    # Verify the integrity of the downloaded VLC installer
+
+    # Verify the integrity of the downloaded VLC installer by comparing the
+    # expected and computed SHA-256 hash values
     if installer_ok(installer_data, expected_sha256):
-        # Save the downloaded VLC installer
+
+        # Save the downloaded VLC installer to disk
         installer_path = save_installer(installer_data)
-        # Run the VLC installer
+        
+        # Silently run the VLC installer
         run_installer(installer_path)
-        # Delete or Remove the VLC installer
+        
+        # Delete the VLC installer from disk
         delete_installer(installer_path)
 
-
 def get_expected_sha256():
-    path = "http://download.videolan.org/pub/videolan/vlc/3.0.18/win64/vlc-3.0.18-win64.exe.sha256"
-    res = requests.get(path)
+    path_to_download = "http://download.videolan.org/pub/videolan/vlc/3.0.18/win64/vlc-3.0.18-win64.exe.sha256"
+    resquests = requests.get(path_to_download)
 
-    if res.ok:
+    if resquests.ok:
         with open('HashValue.txt', 'w') as f:
-            f.write(res.content.decode().split(" ")[0])
+            f.write(resquests.content.decode().split(" ")[0])
             print("File Downloaded!")
         with open('HashValue.txt', 'r') as f:
-            expected_value = f.readline()
-        return expected_value
-
+            expected_value_of_hash = f.readline()
+        return expected_value_of_hash
 
 def download_installer():
-    file_url = "http://download.videolan.org/pub/videolan/vlc/3.0.18/win64/vlc-3.0.18-win64.exe"
-    resp_msg = requests.get(file_url)
+    url = "http://download.videolan.org/pub/videolan/vlc/3.0.18/win64/vlc-3.0.18-win64.exe"
+    response_msg = requests.get(url)
     
-    if resp_msg.status_code == requests.codes.ok:
-        return resp_msg
-
+    if response_msg.status_code == requests.codes.ok:
+        return response_msg
 
 def installer_ok(installer_data, expected_sha256):
     installer_hash = hashlib.sha256(installer_data.content).hexdigest()
@@ -48,27 +47,23 @@ def installer_ok(installer_data, expected_sha256):
     else:
         return False
 
-
 def save_installer(installer_data):
-    installer_path = os.getenv('TEMP')+"\\vlc_installer.exe"
+    installers_path = os.getenv('TEMP')+"\\vlc_installer.exe"
     data_content = installer_data.content
 
-    with open(installer_path, "wb") as f:
+    with open(installers_path, "wb") as f:
         f.write(data_content)
-    return installer_path
-
+    return installers_path
 
 def run_installer(installer_path):
     installer_path = os.path.abspath(installer_path)
     subprocess.run([installer_path, '/L=1033', '/S'])
     return
-    
 
 def delete_installer(installer_path):
     installer_path = os.path.abspath(installer_path)
     os.remove(installer_path)
     return
-
 
 if __name__ == '__main__':
     main()
